@@ -12,7 +12,16 @@ SwiftUI + MapKit App ──stdin/stdout JSON──▶ helper/location_helper.py 
 - macOS 14 以上、Python 3.10 以上、Swift（Command Line Tools 即可）
 - iPhone 已信任這台 Mac，且「設定 → 隱私權與安全性 → 開發者模式」已開啟
 
-## 安裝與執行
+## 下載
+
+- **正式版**：到 [Releases](https://github.com/wallyjue/GPSSpoofer/releases) 下載 `GPSSpoofer-<版本>.dmg`。
+- **最新建置**：到 [Actions → Build](https://github.com/wallyjue/GPSSpoofer/actions/workflows/build.yml)
+  點選最新一次成功的執行，在頁面底部的 Artifacts 下載（需登入 GitHub，保留 90 天）。
+
+DMG 是 ad-hoc 簽署，第一次開啟前要執行 `xattr -dr com.apple.quarantine /Applications/GPSSpoofer.app`。
+推送 `v*` tag（例如 `git tag v0.2.0 && git push origin v0.2.0`）會自動建立對應版本的 Release。
+
+## 從原始碼安裝與執行
 
 ```bash
 ./scripts/setup.sh        # 建立 .venv 並安裝 pymobiledevice3

@@ -1,0 +1,75 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 GPSSpoofer contributors
+# 每次 push / PR 都打包 DMG 並上傳成 Actions artifact；推 v* tag 時另外建立 GitHub Release。
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    # GitHub 的 macOS runner 是 Apple Silicon，產出 arm64 版本
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: helper/requirements.txt
+
+      - name: 決定版本號
+        id: version
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.1.0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 建立 Python 環境
+        run: ./scripts/setup.sh
+
+      - name: 打包 DMG
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./scripts/package.sh
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: GPSSpoofer-${{ steps.version.outputs.version }}-${{ github.sha }}
+          path: |
+            build/GPSSpoofer-${{ steps.version.outputs.version }}.dmg
+            build/THIRD_PARTY_LICENSES.txt
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: 建立 GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.dmg dist/THIRD_PARTY_LICENSES.txt \
+            --repo "$GITHUB_REPOSITORY" --title "GPSSpoofer $GITHUB_REF_NAME" --generate-notes
