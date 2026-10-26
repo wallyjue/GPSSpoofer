@@ -50,7 +50,11 @@ final class LocationController: ObservableObject {
 
     // 多點路線（見 LocationController+Route.swift）
     @Published var waypoints: [Waypoint] = []
-    @Published var speedKmh: Double = 5
+    @Published var speedKmh: Double = 5 {
+        didSet { if usesCustomSpeed { customSpeedKmh = speedKmh } }
+    }
+    /// 點了「自訂」之後，調整的速度會存成自訂速度
+    @Published var usesCustomSpeed = false
     @Published var routeEndBehavior: RouteEndBehavior = .stop
     @Published var followDevice = true
     @Published var routeState: RouteState = .idle

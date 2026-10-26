@@ -431,10 +431,14 @@ private struct RouteSection: View {
             .frame(maxWidth: .infinity)
             HStack {
                 ForEach(SpeedPreset.all) { preset in
-                    Button(preset.name) { controller.speedKmh = preset.kmh }
+                    Button(preset.name) { controller.selectPreset(preset) }
                         .buttonStyle(.bordered)
-                        .tint(controller.speedKmh == preset.kmh ? .accentColor : nil)
+                        .tint(!controller.usesCustomSpeed && controller.speedKmh == preset.kmh ? .accentColor : nil)
                 }
+                Button(L("自訂")) { controller.selectCustomSpeed() }
+                    .buttonStyle(.bordered)
+                    .tint(controller.usesCustomSpeed ? .accentColor : nil)
+                    .help(L("點選後調整的速度會儲存，下次點選時沿用"))
             }
             Picker(L("抵達終點後"), selection: $controller.routeEndBehavior) {
                 ForEach(RouteEndBehavior.allCases) { Text($0.title).tag($0) }

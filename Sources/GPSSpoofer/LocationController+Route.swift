@@ -41,6 +41,24 @@ struct SpeedPreset: Identifiable {
 private let routeTickSeconds = 1.0
 
 extension LocationController {
+    // MARK: - 速度
+
+    /// 上次儲存的自訂速度，跨啟動保留
+    var customSpeedKmh: Double {
+        get { UserDefaults.standard.object(forKey: "customSpeedKmh") as? Double ?? 15 }
+        set { UserDefaults.standard.set(newValue, forKey: "customSpeedKmh") }
+    }
+
+    func selectPreset(_ preset: SpeedPreset) {
+        usesCustomSpeed = false
+        speedKmh = preset.kmh
+    }
+
+    func selectCustomSpeed() {
+        speedKmh = customSpeedKmh
+        usesCustomSpeed = true
+    }
+
     // MARK: - 編輯路線點
 
     func addWaypoint(_ coordinate: CLLocationCoordinate2D, name: String? = nil) {

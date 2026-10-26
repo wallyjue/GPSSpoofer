@@ -90,3 +90,5 @@
 "路況" = "Traffic";
 "顯示即時路況（純衛星影像不支援）" = "Show live traffic (not available in Satellite)";
 "顯示立體建築與地形" = "Show 3D buildings and terrain";
+"自訂" = "Custom";
+"點選後調整的速度會儲存，下次點選時沿用" = "Speed changes made after selecting this are saved and reused next time";
