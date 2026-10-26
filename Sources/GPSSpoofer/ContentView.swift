@@ -7,6 +7,9 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var controller: LocationController
     @AppStorage("sidebarVisible") private var sidebarVisible = true
+    @AppStorage("mapLayer") private var mapLayer = MapLayer.standard
+    @AppStorage("map3D") private var map3D = false
+    @AppStorage("mapTraffic") private var mapTraffic = false
 
     var body: some View {
         // 不用 NavigationSplitView：它的側欄會延伸到標題列，HSplitView 讓兩欄都排在標題列下方
@@ -60,7 +63,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .mapStyle(controller.useSatellite ? .hybrid : .standard)
+            .mapStyle(mapStyle)
             .mapControls {
                 MapCompass()
                 MapScaleView()
@@ -69,6 +72,7 @@ struct ContentView: View {
             }
             .onMapCameraChange { context in
                 controller.visibleRegion = context.region
+                controller.visibleCamera = context.camera
             }
             .onTapGesture { point in
                 if let coordinate = proxy.convert(point, from: .local) {
@@ -77,22 +81,63 @@ struct ContentView: View {
             }
         }
         .overlay(alignment: .topLeading) {
-            HStack(spacing: 10) {
-                Picker("", selection: $controller.useSatellite) {
-                    Text(L("地圖")).tag(false)
-                    Text(L("衛星")).tag(true)
-                }
-                .fixedSize()
+            // 分兩列：翻譯成英文後一列放不下
+            VStack(alignment: .leading, spacing: 8) {
                 Picker("", selection: $controller.tapMode) {
                     Label(L("點擊傳送"), systemImage: "location").tag(LocationController.TapMode.teleport)
                     Label(L("新增路線點"), systemImage: "point.topleft.down.to.point.bottomright.curvepath")
                         .tag(LocationController.TapMode.addWaypoint)
                 }
+                .pickerStyle(.segmented)
                 .fixedSize()
+                HStack(spacing: 8) {
+                    Picker("", selection: $mapLayer) {
+                        ForEach(MapLayer.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .fixedSize()
+                    Toggle("3D", isOn: $map3D)
+                        .help(L("顯示立體建築與地形"))
+                    Toggle(L("路況"), isOn: $mapTraffic)
+                        .disabled(mapLayer == .satellite)
+                        .help(L("顯示即時路況（純衛星影像不支援）"))
+                }
+                .toggleStyle(.button)
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
+            .padding(8)
+            // 衛星影像上直接疊按鈕會看不清楚
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
             .padding(10)
+        }
+        .onChange(of: map3D) { _, enabled in
+            // 不傾斜的話從正上方看不出立體效果
+            guard var camera = controller.visibleCamera else { return }
+            camera.pitch = enabled ? 60 : 0
+            withAnimation { controller.cameraPosition = .camera(camera) }
+        }
+    }
+
+    private var mapStyle: MapStyle {
+        let elevation: MapStyle.Elevation = map3D ? .realistic : .flat
+        switch mapLayer {
+        case .standard: return .standard(elevation: elevation, showsTraffic: mapTraffic)
+        case .satellite: return .imagery(elevation: elevation)
+        case .hybrid: return .hybrid(elevation: elevation, showsTraffic: mapTraffic)
+        }
+    }
+}
+
+private enum MapLayer: String, CaseIterable, Identifiable {
+    case standard, satellite, hybrid
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .standard: L("標準")
+        case .satellite: L("衛星")
+        case .hybrid: L("混合")
         }
     }
 }

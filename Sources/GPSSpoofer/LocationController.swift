@@ -33,13 +33,14 @@ final class LocationController: ObservableObject {
                            span: .init(latitudeDelta: 0.05, longitudeDelta: 0.05)))
     /// 地圖目前可見範圍，搜尋時以此為中心
     var visibleRegion: MKCoordinateRegion?
+    /// 地圖目前的鏡頭，切換 3D 時以它為基準調整傾斜角
+    var visibleCamera: MapCamera?
 
     @Published var sidebarTab: SidebarTab = .device
     @Published var tapMode: TapMode = .teleport
     @Published var latitudeText = ""
     @Published var longitudeText = ""
     @Published var sendOnTap = true
-    @Published var useSatellite = false
     @Published var logs: [String] = []
 
     // 地點搜尋（見 LocationController+Search.swift）

@@ -6,7 +6,6 @@
 "展開側邊欄（⌃⌘S）" = "Show Sidebar (⌃⌘S)";
 "目標" = "Target";
 "iPhone 目前位置" = "iPhone Location";
-"地圖" = "Map";
 "衛星" = "Satellite";
 "點擊傳送" = "Tap to Teleport";
 "新增路線點" = "Add Waypoints";
@@ -86,3 +85,8 @@
 "來回往返" = "Back and Forth";
 "語言" = "Language";
 "介面語言" = "Interface Language";
+"標準" = "Standard";
+"混合" = "Hybrid";
+"路況" = "Traffic";
+"顯示即時路況（純衛星影像不支援）" = "Show live traffic (not available in Satellite)";
+"顯示立體建築與地形" = "Show 3D buildings and terrain";
