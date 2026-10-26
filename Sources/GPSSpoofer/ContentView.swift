@@ -21,6 +21,8 @@ struct ContentView: View {
             mapView
                 .frame(minWidth: 500)
         }
+        // WindowGroup 的標題只在開窗時算一次，換語言後要靠這裡更新
+        .navigationTitle(L("iPhone 定位模擬"))
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button {
