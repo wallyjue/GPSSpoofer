@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPSSpoofer</title>
+<meta name="description" content="在 Mac 上用地圖選點，模擬已開啟開發者模式的 iPhone 所回報的 GPS 位置。macOS app for simulating the GPS location of a developer-mode iPhone.">
+<link rel="icon" href="images/icon.png">
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --text: #1d1d1f;
+    --muted: #5f6368;
+    --line: #e3e3e0;
+    --accent: #0a66d8;
+    --accent-text: #ffffff;
+    --code-bg: #f0f0ed;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141416;
+      --surface: #1d1d20;
+      --text: #f2f2f2;
+      --muted: #a1a1a6;
+      --line: #2e2e33;
+      --accent: #4c9bff;
+      --accent-text: #0b0b0c;
+      --code-bg: #26262a;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141416;
+    --surface: #1d1d20;
+    --text: #f2f2f2;
+    --muted: #a1a1a6;
+    --line: #2e2e33;
+    --accent: #4c9bff;
+    --accent-text: #0b0b0c;
+    --code-bg: #26262a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.4);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Hiragino Sans", "Noto Sans TC", "Helvetica Neue", sans-serif;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; text-decoration: none; color: var(--text); }
+  .brand img { width: 32px; height: 32px; border-radius: 8px; }
+  .lang { display: flex; gap: 4px; }
+  .lang button {
+    font: inherit; font-size: 14px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer;
+  }
+  .lang button[aria-pressed="true"] { color: var(--text); border-color: var(--text); }
+
+  .hero { padding: 48px 0 32px; text-align: center; }
+  .hero img.icon { width: 112px; height: 112px; border-radius: 26px; box-shadow: var(--shadow); }
+  .hero h1 { overflow-wrap: anywhere; font-size: clamp(32px, 6vw, 52px); line-height: 1.15; margin: 24px 0 12px; letter-spacing: -0.01em; }
+  .hero p.lede { font-size: clamp(17px, 2.4vw, 20px); color: var(--muted); max-width: 640px; margin: 0 auto 28px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 12px;
+    font-weight: 600; text-decoration: none; border: 1px solid var(--line);
+    background: var(--surface); color: var(--text);
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .meta { margin-top: 14px; font-size: 14px; color: var(--muted); }
+
+  .shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 24px 0 64px; }
+  .shots figure { margin: 0; }
+  .shots img { width: 100%; height: auto; display: block; border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .shots figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  section { padding: 8px 0 48px; }
+  h2 { font-size: 28px; margin: 0 0 20px; letter-spacing: -0.01em; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .flow .node { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 15px; }
+  .flow .arrow { color: var(--muted); }
+  .flow-note { color: var(--muted); font-size: 15px; margin-top: 14px; }
+
+  ol.steps { padding-left: 22px; margin: 0; }
+  ol.steps li { margin-bottom: 10px; }
+  code, pre { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 14px; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 6px; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 10px; overflow-x: auto; margin: 10px 0 0; }
+  pre code { background: none; padding: 0; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  ul.plain { margin: 0; padding-left: 20px; }
+  ul.plain li { margin-bottom: 8px; }
+  .note { border-left: 3px solid var(--accent); padding: 10px 16px; background: var(--surface); border-radius: 0 10px 10px 0; color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); padding: 24px 0 40px; color: var(--muted); font-size: 14px; }
+
+  [data-lang-text] { display: none; }
+  html[lang="zh-Hant"] [data-lang-text="zh-Hant"],
+  html[lang="en"] [data-lang-text="en"] { display: revert; }
+
+  @media (max-width: 760px) {
+    .shots, .grid, .two { grid-template-columns: minmax(0, 1fr); }
+    .hero { padding-top: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><img src="images/icon.png" alt="">GPSSpoofer</a>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-set-lang="zh-Hant">繁中</button>
+      <button type="button" data-set-lang="en">EN</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <img class="icon" src="images/icon.png" alt="GPSSpoofer app icon" width="112" height="112">
+    <h1>
+      <span data-lang-text="zh-Hant">在 Mac 上模擬 iPhone 的 GPS 位置</span>
+      <span data-lang-text="en">Simulate your iPhone's GPS location from a Mac</span>
+    </h1>
+    <p class="lede">
+      <span data-lang-text="zh-Hant">在地圖上點一下，或規劃一條多點路線，USB 連接的 iPhone 就會回報這個位置。原理和 Xcode 的「Simulate Location」相同，不需要越獄，也不需要 sudo。</span>
+      <span data-lang-text="en">Click the map or plan a multi-stop route, and the iPhone on USB reports that location. It uses the same service as Xcode's Simulate Location, with no jailbreak and no sudo.</span>
+    </p>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/wallyjue/GPSSpoofer/releases/latest">
+        <span data-lang-text="zh-Hant">下載最新版 DMG</span>
+        <span data-lang-text="en">Download the latest DMG</span>
+      </a>
+      <a class="btn" href="https://github.com/wallyjue/GPSSpoofer">
+        <span data-lang-text="zh-Hant">GitHub 原始碼</span>
+        <span data-lang-text="en">Source on GitHub</span>
+      </a>
+    </div>
+    <p class="meta">
+      <span data-lang-text="zh-Hant">macOS 14 以上 · Apple Silicon · 免費開源（GPL-3.0）</span>
+      <span data-lang-text="en">macOS 14 or later · Apple Silicon · Free and open source (GPL-3.0)</span>
+    </p>
+  </div>
+
+  <div class="shots">
+    <figure>
+      <img src="images/satellite-en.jpg" alt="GPSSpoofer in English with the satellite map layer" width="1000" height="724" loading="lazy">
+      <figcaption>
+        <span data-lang-text="zh-Hant">衛星底圖，英文介面</span>
+        <span data-lang-text="en">Satellite layer, English interface</span>
+      </figcaption>
+    </figure>
+    <figure>
+      <img src="images/route-ja.jpg" alt="GPSSpoofer in Japanese showing the route tab and speed presets" width="1000" height="724" loading="lazy">
+      <figcaption>
+        <span data-lang-text="zh-Hant">路線分頁與速度設定，日文介面</span>
+        <span data-lang-text="en">Route tab and speed presets, Japanese interface</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <section>
+    <h2>
+      <span data-lang-text="zh-Hant">功能</span>
+      <span data-lang-text="en">Features</span>
+    </h2>
+    <div class="grid">
+      <div class="card">
+        <h3><span data-lang-text="zh-Hant">點地圖就傳送</span><span data-lang-text="en">Click to teleport</span></h3>
+        <p><span data-lang-text="zh-Hant">在地圖上點選目標，可以立即套用到 iPhone，也可以直接輸入或貼上經緯度。</span><span data-lang-text="en">Pick a spot on the map and apply it right away, or type or paste coordinates.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang-text="zh-Hant">地點搜尋</span><span data-lang-text="en">Place search</span></h3>
+        <p><span data-lang-text="zh-Hant">用店名或地址搜尋 Apple 地圖，以目前畫面為中心排序結果，一鍵設為目標或加入路線。</span><span data-lang-text="en">Search Apple Maps by name or address around the current view, then set a result as the target or add it to a route.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang-text="zh-Hant">多點路線</span><span data-lang-text="en">Multi-stop routes</span></h3>
+        <p><span data-lang-text="zh-Hant">依序走過多個路線點，終點可以停止、循環或來回往返，並顯示全程距離與預估時間。</span><span data-lang-text="en">Travel through waypoints in order. At the end, stop, loop back or go back and forth. Distance and travel time are shown.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang-text="zh-Hant">可調速度</span><span data-lang-text="en">Adjustable speed</span></h3>
+        <p><span data-lang-text="zh-Hant">1–120 km/h，有步行、慢跑、單車、汽車快捷鍵，以及會記住數值的自訂速度。移動途中調整立即生效。</span><span data-lang-text="en">1 to 120 km/h with walk, jog, bike and car presets, plus a custom speed that is remembered. Changes apply while moving.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang-text="zh-Hant">三種底圖</span><span data-lang-text="en">Three map layers</span></h3>
+        <p><span data-lang-text="zh-Hant">標準、衛星、混合，另有 3D 建築與地形，以及即時路況。</span><span data-lang-text="en">Standard, satellite and hybrid, with optional 3D buildings and terrain and live traffic.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang-text="zh-Hant">四種語言</span><span data-lang-text="en">Four languages</span></h3>
+        <p><span data-lang-text="zh-Hant">繁體中文、简体中文、English、日本語，在 App 內切換，立即生效。</span><span data-lang-text="en">Traditional Chinese, Simplified Chinese, English and Japanese, switchable in the app without a restart.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>
+      <span data-lang-text="zh-Hant">運作方式</span>
+      <span data-lang-text="en">How it works</span>
+    </h2>
+    <div class="flow">
+      <span class="node"><span data-lang-text="zh-Hant">SwiftUI + MapKit App</span><span data-lang-text="en">SwiftUI + MapKit app</span></span>
+      <span class="arrow" aria-hidden="true">→</span>
+      <span class="node">location_helper（Python）</span>
+      <span class="arrow" aria-hidden="true">→</span>
+      <span class="node">pymobiledevice3</span>
+      <span class="arrow" aria-hidden="true">→</span>
+      <span class="node"><span data-lang-text="zh-Hant">USB → iPhone</span><span data-lang-text="en">USB → iPhone</span></span>
+    </div>
+    <p class="flow-note">
+      <span data-lang-text="zh-Hant">App 透過 stdin/stdout 的 JSON 和內附的 helper 溝通，helper 再用 DVT 的 LocationSimulation 服務設定位置。iOS 17 以上會自動建立 tunnel，iOS 16 以下改走 lockdown 服務。DMG 已內附 helper，不需要另外安裝 Python。</span>
+      <span data-lang-text="en">The app talks JSON over stdin/stdout to a bundled helper, which sets the location through the DVT LocationSimulation service. On iOS 17 and later it opens a tunnel automatically. On iOS 16 and earlier it uses the lockdown service. The DMG bundles the helper, so no Python install is needed.</span>
+    </p>
+  </section>
+
+  <section>
+    <h2>
+      <span data-lang-text="zh-Hant">開始使用</span>
+      <span data-lang-text="en">Getting started</span>
+    </h2>
+    <div class="two">
+      <div class="card">
+        <h3><span data-lang-text="zh-Hant">需求</span><span data-lang-text="en">Requirements</span></h3>
+        <ul class="plain">
+          <li><span data-lang-text="zh-Hant">搭載 Apple Silicon、macOS 14 以上的 Mac</span><span data-lang-text="en">An Apple Silicon Mac on macOS 14 or later</span></li>
+          <li><span data-lang-text="zh-Hant">用 USB 連接、已信任這台 Mac 的 iPhone</span><span data-lang-text="en">An iPhone on USB that trusts this Mac</span></li>
+          <li><span data-lang-text="zh-Hant">iPhone 已開啟「設定 → 隱私權與安全性 → 開發者模式」</span><span data-lang-text="en">Developer Mode turned on in Settings → Privacy &amp; Security on the iPhone</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span data-lang-text="zh-Hant">安裝</span><span data-lang-text="en">Install</span></h3>
+        <ol class="steps">
+          <li><span data-lang-text="zh-Hant">從 <a href="https://github.com/wallyjue/GPSSpoofer/releases/latest">Releases</a> 下載 DMG，把 GPSSpoofer 拖進「應用程式」。</span><span data-lang-text="en">Download the DMG from <a href="https://github.com/wallyjue/GPSSpoofer/releases/latest">Releases</a> and drag GPSSpoofer to Applications.</span></li>
+          <li><span data-lang-text="zh-Hant">目前的版本是 ad-hoc 簽署，第一次開啟前在終端機執行：</span><span data-lang-text="en">The build is ad-hoc signed. Before the first launch, run this in Terminal:</span>
+            <pre><code>xattr -dr com.apple.quarantine /Applications/GPSSpoofer.app</code></pre>
+          </li>
+          <li><span data-lang-text="zh-Hant">在「裝置」分頁選擇 iPhone 並連線。第一次連線會掛載 Developer Disk Image，大約需要數十秒。</span><span data-lang-text="en">Pick your iPhone in the Device tab and connect. The first connection mounts the Developer Disk Image, which can take a minute.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>
+      <span data-lang-text="zh-Hant">從原始碼建置</span>
+      <span data-lang-text="en">Build from source</span>
+    </h2>
+    <pre><code>git clone https://github.com/wallyjue/GPSSpoofer.git
+cd GPSSpoofer
+./scripts/setup.sh     # Python venv + pymobiledevice3
+swift run              # or ./scripts/package.sh for a DMG</code></pre>
+  </section>
+
+  <section>
+    <h2>
+      <span data-lang-text="zh-Hant">限制與注意事項</span>
+      <span data-lang-text="en">Limitations and notes</span>
+    </h2>
+    <ul class="plain">
+      <li><span data-lang-text="zh-Hant">iOS 17 以上，模擬位置只在連線期間有效。中斷連線或關閉 App 後，iPhone 會回到真實位置。</span><span data-lang-text="en">On iOS 17 and later, the simulated location lasts only while connected. Disconnecting or quitting restores the real location.</span></li>
+      <li><span data-lang-text="zh-Hant">中國大陸地區的 Apple 地圖使用 GCJ-02 座標，點選位置會與實際 WGS-84 位置偏移數百公尺。</span><span data-lang-text="en">In mainland China, Apple Maps uses GCJ-02 coordinates, so picked points are offset by a few hundred meters from WGS-84.</span></li>
+      <li><span data-lang-text="zh-Hant">目前只提供 Apple Silicon（arm64）版本。</span><span data-lang-text="en">Only Apple Silicon (arm64) builds are provided.</span></li>
+    </ul>
+    <p class="note">
+      <span data-lang-text="zh-Hant">這個工具適合開發與測試定位相關的 App。許多 App 和遊戲的服務條款禁止偽造位置，使用前請確認，風險由使用者自行承擔。</span>
+      <span data-lang-text="en">This tool is meant for developing and testing location-aware apps. Many apps and games forbid spoofed locations in their terms of service. Check before you use it, and use it at your own risk.</span>
+    </p>
+  </section>
+
+  <footer>
+    <span data-lang-text="zh-Hant">GPSSpoofer 以 <a href="https://github.com/wallyjue/GPSSpoofer/blob/main/LICENSE">GPL-3.0-or-later</a> 授權發布。與 Apple Inc. 無關。</span>
+    <span data-lang-text="en">GPSSpoofer is released under <a href="https://github.com/wallyjue/GPSSpoofer/blob/main/LICENSE">GPL-3.0-or-later</a>. Not affiliated with Apple Inc.</span>
+  </footer>
+</div>
+<script>
+  (function () {
+    var supported = ["zh-Hant", "en"];
+    function apply(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-set-lang]").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.dataset.setLang === lang));
+      });
+      try { localStorage.setItem("lang", lang); } catch (e) {}
+    }
+    var saved = null;
+    try { saved = localStorage.getItem("lang"); } catch (e) {}
+    var guess = /^zh/i.test(navigator.language || "") ? "zh-Hant" : "en";
+    apply(supported.indexOf(saved) >= 0 ? saved : guess);
+    document.querySelectorAll("[data-set-lang]").forEach(function (b) {
+      b.addEventListener("click", function () { apply(b.dataset.setLang); });
+    });
+  })();
+</script>
+</body>
+</html>
