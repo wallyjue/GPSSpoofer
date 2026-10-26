@@ -15,8 +15,8 @@ final class LocationController: ObservableObject {
         case teleport, addWaypoint
     }
 
-    enum SidebarTab: Hashable {
-        case location, route
+    enum SidebarTab: Hashable, CaseIterable {
+        case device, search, location, route, log
     }
 
     @Published var devices: [DeviceInfo] = []
@@ -34,7 +34,7 @@ final class LocationController: ObservableObject {
     /// 地圖目前可見範圍，搜尋時以此為中心
     var visibleRegion: MKCoordinateRegion?
 
-    @Published var sidebarTab: SidebarTab = .location
+    @Published var sidebarTab: SidebarTab = .device
     @Published var tapMode: TapMode = .teleport
     @Published var latitudeText = ""
     @Published var longitudeText = ""

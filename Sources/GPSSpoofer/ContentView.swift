@@ -6,13 +6,28 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var controller: LocationController
+    @AppStorage("sidebarVisible") private var sidebarVisible = true
 
     var body: some View {
-        NavigationSplitView {
-            Sidebar()
-                .navigationSplitViewColumnWidth(min: 300, ideal: 330, max: 400)
-        } detail: {
+        // 不用 NavigationSplitView：它的側欄會延伸到標題列，HSplitView 讓兩欄都排在標題列下方
+        HSplitView {
+            if sidebarVisible {
+                Sidebar()
+                    .frame(minWidth: 300, idealWidth: 330, maxWidth: 400)
+            }
             mapView
+                .frame(minWidth: 500)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button {
+                    withAnimation { sidebarVisible.toggle() }
+                } label: {
+                    Image(systemName: "sidebar.left")
+                }
+                .keyboardShortcut("s", modifiers: [.control, .command])
+                .help(sidebarVisible ? "收合側邊欄（⌃⌘S）" : "展開側邊欄（⌃⌘S）")
+            }
         }
     }
 
@@ -104,32 +119,52 @@ extension CLLocationCoordinate2D: @retroactive Equatable {
 
 // MARK: - 側邊欄
 
+private extension LocationController.SidebarTab {
+    var title: String {
+        switch self {
+        case .device: "裝置"
+        case .search: "搜尋"
+        case .location: "單點定位"
+        case .route: "多點路線"
+        case .log: "記錄"
+        }
+    }
+}
+
 private struct Sidebar: View {
     @EnvironmentObject private var controller: LocationController
 
     var body: some View {
-        Form {
-            DeviceSection()
-            SearchSection()
-
+        VStack(spacing: 0) {
             Picker("", selection: $controller.sidebarTab) {
-                Text("單點定位").tag(LocationController.SidebarTab.location)
-                Text("多點路線").tag(LocationController.SidebarTab.route)
+                ForEach(LocationController.SidebarTab.allCases, id: \.self) { tab in
+                    Text(tab.title).tag(tab)
+                }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .padding(10)
+
+            Divider()
 
             switch controller.sidebarTab {
-            case .location: LocationSection()
-            case .route: RouteSection()
-            }
-
-            Section("記錄") {
+            case .log:
                 LogView(lines: controller.logs)
-                    .frame(minHeight: 140)
+                    .padding(10)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            default:
+                Form {
+                    switch controller.sidebarTab {
+                    case .device: DeviceSection()
+                    case .search: SearchSection()
+                    case .location: LocationSection()
+                    case .route: RouteSection()
+                    case .log: EmptyView()
+                    }
+                }
+                .formStyle(.grouped)
             }
         }
-        .formStyle(.grouped)
         .overlay(alignment: .bottom) {
             if controller.isBusy {
                 ProgressView().controlSize(.small).padding(8)
@@ -314,14 +349,25 @@ private struct RouteSection: View {
         }
 
         Section("移動速度") {
-            HStack {
-                Slider(value: $controller.speedKmh, in: 1...120, step: 1)
-                TextField("", value: $controller.speedKmh, format: .number.precision(.fractionLength(0...1)))
-                    .labelsHidden()
-                    .frame(width: 56)
-                    .multilineTextAlignment(.trailing)
-                Text("km/h").foregroundStyle(.secondary)
+            LabeledContent("速度") {
+                HStack(spacing: 4) {
+                    TextField("", value: $controller.speedKmh, format: .number.precision(.fractionLength(0...1)))
+                        .labelsHidden()
+                        .frame(width: 56)
+                        .multilineTextAlignment(.trailing)
+                    Text("km/h").foregroundStyle(.secondary)
+                }
             }
+            // 滑桿獨佔一列並撐滿寬度，Form 才不會把它壓到右側
+            Slider(value: $controller.speedKmh, in: 1...120, step: 1) {
+                Text("速度")
+            } minimumValueLabel: {
+                Text("1").font(.caption).foregroundStyle(.secondary)
+            } maximumValueLabel: {
+                Text("120").font(.caption).foregroundStyle(.secondary)
+            }
+            .labelsHidden()
+            .frame(maxWidth: .infinity)
             HStack {
                 ForEach(SpeedPreset.all) { preset in
                     Button(preset.name) { controller.speedKmh = preset.kmh }
