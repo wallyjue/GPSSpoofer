@@ -47,7 +47,8 @@ open build/GPSSpoofer.app
    - 選擇抵達終點後要停止、回到起點循環，還是來回往返
    - 開始、暫停、停止；iPhone 每秒更新一次位置，地圖可以設定跟著移動
 6. 「還原真實定位」或「中斷連線」會讓 iPhone 回到真實 GPS。
-7. 標題列左側的側邊欄按鈕（或 ⌃⌘S）可以收合側邊欄，讓地圖佔滿視窗。
+7. 「裝置」分頁可以切換介面語言（繁體中文、简体中文、English、日本語，或跟隨系統），立即生效。
+8. 標題列左側的側邊欄按鈕（或 ⌃⌘S）可以收合側邊欄，讓地圖佔滿視窗。
 
 > iOS 17 以後，模擬定位只在連線期間有效。App 關閉後 iPhone 會自動恢復真實位置。
 
@@ -82,6 +83,12 @@ iOS 16 以下改走 lockdown 的 `com.apple.dt.simulatelocation`。
   ```
 - 目前只產生 Apple Silicon（arm64）版本。
 - 打包時會自動產生 `build/THIRD_PARTY_LICENSES.txt`，並連同 `LICENSE` 一起放進 App 和 DMG。
+
+## 翻譯
+
+介面字串用 `L("繁體中文原文")` 包起來，原文本身就是 key，翻譯放在
+`Sources/GPSSpoofer/Resources/<語言>.lproj/Localizable.strings`。新增或修改字串後執行
+`python3 scripts/check_strings.py`，它會列出缺少的翻譯，CI 也會跑這個檢查。
 
 ## 已知限制
 

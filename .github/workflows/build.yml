@@ -39,6 +39,9 @@ jobs:
             echo "version=0.1.0" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: 檢查翻譯是否齊全
+        run: python3 scripts/check_strings.py
+
       - name: 建立 Python 環境
         run: ./scripts/setup.sh
 

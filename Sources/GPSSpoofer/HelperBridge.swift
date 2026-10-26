@@ -19,7 +19,7 @@ struct DeviceInfo: Identifiable, Hashable, Decodable {
     var displayName: String {
         let title = name ?? udid
         guard let version, !version.isEmpty else { return title }
-        return "\(title)（iOS \(version)，\(connection)）"
+        return L("\(title)（iOS \(version)，\(connection)）")
     }
 }
 
@@ -96,7 +96,7 @@ final class HelperBridge: @unchecked Sendable {
         for (python, script) in candidates where fm.isExecutableFile(atPath: python) && fm.fileExists(atPath: script) {
             return (URL(fileURLWithPath: python), ["-u", script])
         }
-        throw HelperError(message: "找不到 Python helper，請先執行 scripts/setup.sh")
+        throw HelperError(message: L("找不到 Python helper，請先執行 scripts/setup.sh"))
     }
 
     // MARK: - 請求 / 回應
@@ -122,13 +122,13 @@ final class HelperBridge: @unchecked Sendable {
                 return
             }
             guard let handle else {
-                failAll(HelperError(message: "helper 尚未啟動"))
+                failAll(HelperError(message: L("helper 尚未啟動")))
                 return
             }
             do {
                 try handle.write(contentsOf: payload)
             } catch {
-                failAll(HelperError(message: "無法寫入 helper：\(error.localizedDescription)"))
+                failAll(HelperError(message: L("無法寫入 helper：\(error.localizedDescription)")))
             }
         }
     }
@@ -162,7 +162,7 @@ final class HelperBridge: @unchecked Sendable {
             let result = object["result"]
             continuation.resume(returning: result is NSNull ? nil : result)
         } else {
-            continuation.resume(throwing: HelperError(message: object["error"] as? String ?? "未知錯誤"))
+            continuation.resume(throwing: HelperError(message: object["error"] as? String ?? L("未知錯誤")))
         }
     }
 
@@ -171,7 +171,7 @@ final class HelperBridge: @unchecked Sendable {
             process = nil
             stdinHandle = nil
         }
-        failAll(HelperError(message: "helper 程序已結束"))
+        failAll(HelperError(message: L("helper 程序已結束")))
         onTerminate?()
     }
 

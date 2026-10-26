@@ -1,0 +1,4 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* key 為繁體中文原文；用 scripts/check_strings.py 檢查是否齊全 */
+
+/* 繁體中文直接使用 key 原文，這個檔案只是讓系統認得 zh-Hant */

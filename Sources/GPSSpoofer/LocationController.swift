@@ -73,13 +73,13 @@ final class LocationController: ObservableObject {
                 self?.stopRoute()
                 self?.state = .disconnected
                 self?.applied = nil
-                self?.appendLog("helper 已結束")
+                self?.appendLog(L("helper 已結束"))
             }
         }
         do {
             try bridge.start()
         } catch {
-            appendLog("啟動 helper 失敗：\(error.localizedDescription)")
+            appendLog(L("啟動 helper 失敗：\(error.localizedDescription)"))
         }
         Task { await refreshDevices() }
     }
@@ -91,20 +91,20 @@ final class LocationController: ObservableObject {
     // MARK: - 裝置
 
     func refreshDevices() async {
-        await run("掃描裝置") {
+        await run(L("掃描裝置")) {
             let devices = try await bridge.listDevices()
             self.devices = devices
             if self.selectedUDID == nil || !devices.contains(where: { $0.udid == self.selectedUDID }) {
                 self.selectedUDID = devices.first?.udid
             }
-            self.appendLog("找到 \(devices.count) 台裝置")
+            self.appendLog(L("找到 \(devices.count) 台裝置"))
         }
     }
 
     func toggleConnection() async {
         if isConnected {
             stopRoute()
-            await run("中斷連線") {
+            await run(L("中斷連線")) {
                 _ = try await bridge.request("disconnect")
                 self.state = .disconnected
                 self.applied = nil
@@ -113,7 +113,7 @@ final class LocationController: ObservableObject {
         }
         guard let udid = selectedUDID else { return }
         state = .connecting
-        await run("連線（首次需下載並掛載 Developer Disk Image，可能要數十秒）") {
+        await run(L("連線（首次需下載並掛載 Developer Disk Image，可能要數十秒）")) {
             do {
                 let result = try await bridge.request("connect", ["udid": udid]) as? [String: Any]
                 self.state = .connected(version: result?["version"] as? String ?? "?")
@@ -147,7 +147,7 @@ final class LocationController: ObservableObject {
     /// 解析輸入框的經緯度，並把地圖視圖移過去
     func moveViewToInput() {
         guard let coordinate = parsedInput() else {
-            appendLog("經緯度格式錯誤：緯度 -90~90、經度 -180~180")
+            appendLog(L("經緯度格式錯誤：緯度 -90~90、經度 -180~180"))
             return
         }
         target = coordinate
@@ -164,7 +164,8 @@ final class LocationController: ObservableObject {
     func sendTarget() async {
         guard let coordinate = target else { return }
         stopRoute()
-        await run(String(format: "設定定位 %.6f, %.6f", coordinate.latitude, coordinate.longitude)) {
+        let text = String(format: "%.6f, %.6f", coordinate.latitude, coordinate.longitude)
+        await run(L("設定定位 \(text)")) {
             try await self.sendLocation(coordinate)
         }
     }
@@ -176,7 +177,7 @@ final class LocationController: ObservableObject {
 
     func clearLocation() async {
         stopRoute()
-        await run("還原真實定位") {
+        await run(L("還原真實定位")) {
             _ = try await bridge.request("clear")
             self.applied = nil
         }
@@ -203,7 +204,7 @@ final class LocationController: ObservableObject {
         do {
             try await body()
         } catch {
-            appendLog("❌ \(title)失敗：\(error.localizedDescription)")
+            appendLog(L("❌ \(title)失敗：\(error.localizedDescription)"))
         }
         isBusy = false
     }

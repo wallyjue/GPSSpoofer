@@ -16,6 +16,7 @@ APP="build/GPSSpoofer.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/GPSSpoofer"
+ditto "$(dirname "$BIN")/GPSSpoofer_GPSSpoofer.bundle" "$APP/Contents/Resources/GPSSpoofer_GPSSpoofer.bundle"
 cp helper/location_helper.py "$APP/Contents/Resources/"
 
 cp packaging/Info.plist "$APP/Contents/Info.plist"

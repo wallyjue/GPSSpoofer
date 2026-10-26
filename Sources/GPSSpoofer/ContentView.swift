@@ -26,7 +26,7 @@ struct ContentView: View {
                     Image(systemName: "sidebar.left")
                 }
                 .keyboardShortcut("s", modifiers: [.control, .command])
-                .help(sidebarVisible ? "收合側邊欄（⌃⌘S）" : "展開側邊欄（⌃⌘S）")
+                .help(sidebarVisible ? L("收合側邊欄（⌃⌘S）") : L("展開側邊欄（⌃⌘S）"))
             }
         }
     }
@@ -48,11 +48,11 @@ struct ContentView: View {
                         .tint(.orange)
                 }
                 if let target = controller.target, target != controller.applied {
-                    Marker("目標", systemImage: "mappin", coordinate: target)
+                    Marker(L("目標"), systemImage: "mappin", coordinate: target)
                         .tint(.red)
                 }
                 if let applied = controller.applied {
-                    Annotation("iPhone 目前位置", coordinate: applied) {
+                    Annotation(L("iPhone 目前位置"), coordinate: applied) {
                         Image(systemName: "iphone.gen3.circle.fill")
                             .font(.title)
                             .foregroundStyle(.white, .blue)
@@ -79,16 +79,16 @@ struct ContentView: View {
         .overlay(alignment: .topLeading) {
             HStack(spacing: 10) {
                 Picker("", selection: $controller.useSatellite) {
-                    Text("地圖").tag(false)
-                    Text("衛星").tag(true)
+                    Text(L("地圖")).tag(false)
+                    Text(L("衛星")).tag(true)
                 }
-                .frame(width: 120)
+                .fixedSize()
                 Picker("", selection: $controller.tapMode) {
-                    Label("點擊傳送", systemImage: "location").tag(LocationController.TapMode.teleport)
-                    Label("新增路線點", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                    Label(L("點擊傳送"), systemImage: "location").tag(LocationController.TapMode.teleport)
+                    Label(L("新增路線點"), systemImage: "point.topleft.down.to.point.bottomright.curvepath")
                         .tag(LocationController.TapMode.addWaypoint)
                 }
-                .frame(width: 220)
+                .fixedSize()
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -122,11 +122,11 @@ extension CLLocationCoordinate2D: @retroactive Equatable {
 private extension LocationController.SidebarTab {
     var title: String {
         switch self {
-        case .device: "裝置"
-        case .search: "搜尋"
-        case .location: "單點定位"
-        case .route: "多點路線"
-        case .log: "記錄"
+        case .device: L("裝置")
+        case .search: L("搜尋")
+        case .location: L("單點定位")
+        case .route: L("多點路線")
+        case .log: L("記錄")
         }
     }
 }
@@ -155,7 +155,9 @@ private struct Sidebar: View {
             default:
                 Form {
                     switch controller.sidebarTab {
-                    case .device: DeviceSection()
+                    case .device:
+                        DeviceSection()
+                        LanguageSection()
                     case .search: SearchSection()
                     case .location: LocationSection()
                     case .route: RouteSection()
@@ -177,10 +179,10 @@ private struct DeviceSection: View {
     @EnvironmentObject private var controller: LocationController
 
     var body: some View {
-        Section("裝置") {
+        Section(L("裝置")) {
             Picker("iPhone", selection: $controller.selectedUDID) {
                 if controller.devices.isEmpty {
-                    Text("未偵測到裝置").tag(String?.none)
+                    Text(L("未偵測到裝置")).tag(String?.none)
                 }
                 ForEach(controller.devices) { device in
                     Text(device.displayName).tag(Optional(device.udid))
@@ -189,10 +191,10 @@ private struct DeviceSection: View {
             .disabled(controller.isConnected)
 
             HStack {
-                Button("重新整理") { Task { await controller.refreshDevices() } }
+                Button(L("重新整理")) { Task { await controller.refreshDevices() } }
                     .disabled(controller.isConnected)
                 Spacer()
-                Button(controller.isConnected ? "中斷連線" : "連線") {
+                Button(controller.isConnected ? L("中斷連線") : L("連線")) {
                     Task { await controller.toggleConnection() }
                 }
                 .buttonStyle(.borderedProminent)
@@ -201,7 +203,7 @@ private struct DeviceSection: View {
             statusLabel
 
             if let applied = controller.applied {
-                LabeledContent("目前模擬",
+                LabeledContent(L("目前模擬"),
                                value: String(format: "%.6f, %.6f", applied.latitude, applied.longitude))
                     .textSelection(.enabled)
             }
@@ -212,11 +214,23 @@ private struct DeviceSection: View {
     private var statusLabel: some View {
         switch controller.state {
         case .disconnected:
-            Label("未連線", systemImage: "circle").foregroundStyle(.secondary)
+            Label(L("未連線"), systemImage: "circle").foregroundStyle(.secondary)
         case .connecting:
-            Label("連線中…", systemImage: "circle.dotted").foregroundStyle(.orange)
+            Label(L("連線中…"), systemImage: "circle.dotted").foregroundStyle(.orange)
         case .connected(let version):
-            Label("已連線（iOS \(version)）", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+            Label(L("已連線（iOS \(version)）"), systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+        }
+    }
+}
+
+private struct LanguageSection: View {
+    @AppStorage(AppLanguage.storageKey) private var language = AppLanguage.system
+
+    var body: some View {
+        Section(L("語言")) {
+            Picker(L("介面語言"), selection: $language) {
+                ForEach(AppLanguage.allCases) { Text($0.nativeName).tag($0) }
+            }
         }
     }
 }
@@ -225,15 +239,15 @@ private struct SearchSection: View {
     @EnvironmentObject private var controller: LocationController
 
     var body: some View {
-        Section("搜尋地點") {
+        Section(L("搜尋地點")) {
             HStack {
-                TextField("地點、地址或店名", text: $controller.searchQuery, prompt: Text("例如：台北車站"))
+                TextField(L("地點、地址或店名"), text: $controller.searchQuery, prompt: Text(L("例如：台北車站")))
                     .labelsHidden()
                     .onSubmit { Task { await controller.search() } }
                 if controller.isSearching {
                     ProgressView().controlSize(.small)
                 } else {
-                    Button("搜尋") { Task { await controller.search() } }
+                    Button(L("搜尋")) { Task { await controller.search() } }
                         .disabled(controller.searchQuery.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
@@ -242,7 +256,7 @@ private struct SearchSection: View {
                 ForEach(controller.searchResults.prefix(8)) { result in
                     SearchResultRow(result: result)
                 }
-                Button("清除搜尋結果", role: .destructive) { controller.clearSearch() }
+                Button(L("清除搜尋結果"), role: .destructive) { controller.clearSearch() }
                     .buttonStyle(.link)
             }
         }
@@ -268,7 +282,7 @@ private struct SearchResultRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("移動地圖到此地點並設為目標")
+            .help(L("移動地圖到此地點並設為目標"))
 
             Button {
                 controller.addWaypoint(result.coordinate, name: result.name)
@@ -277,7 +291,7 @@ private struct SearchResultRow: View {
                 Image(systemName: "plus.circle")
             }
             .buttonStyle(.borderless)
-            .help("加入路線")
+            .help(L("加入路線"))
         }
     }
 }
@@ -286,33 +300,33 @@ private struct LocationSection: View {
     @EnvironmentObject private var controller: LocationController
 
     var body: some View {
-        Section("座標") {
-            TextField("緯度", text: $controller.latitudeText, prompt: Text("25.033964"))
-            TextField("經度", text: $controller.longitudeText, prompt: Text("121.564468"))
+        Section(L("座標")) {
+            TextField(L("緯度"), text: $controller.latitudeText, prompt: Text("25.033964"))
+            TextField(L("經度"), text: $controller.longitudeText, prompt: Text("121.564468"))
                 .onSubmit { controller.moveViewToInput() }
-            Button("移動地圖到此座標") { controller.moveViewToInput() }
-            Toggle("點擊地圖後立即傳送", isOn: $controller.sendOnTap)
+            Button(L("移動地圖到此座標")) { controller.moveViewToInput() }
+            Toggle(L("點擊地圖後立即傳送"), isOn: $controller.sendOnTap)
         }
 
-        Section("iPhone 定位") {
+        Section(L("iPhone 定位")) {
             Button {
                 Task { await controller.sendTarget() }
             } label: {
-                Label("傳送目標座標到 iPhone", systemImage: "location.fill")
+                Label(L("傳送目標座標到 iPhone"), systemImage: "location.fill")
             }
             .disabled(!controller.isConnected || controller.target == nil)
 
             Button {
                 if let target = controller.target { controller.addWaypoint(target) }
             } label: {
-                Label("把目標加入路線", systemImage: "plus")
+                Label(L("把目標加入路線"), systemImage: "plus")
             }
             .disabled(controller.target == nil)
 
             Button(role: .destructive) {
                 Task { await controller.clearLocation() }
             } label: {
-                Label("還原真實定位", systemImage: "location.slash")
+                Label(L("還原真實定位"), systemImage: "location.slash")
             }
             .disabled(!controller.isConnected)
         }
@@ -325,7 +339,7 @@ private struct RouteSection: View {
     var body: some View {
         Section {
             if controller.waypoints.isEmpty {
-                Text("切換到地圖上方的「新增路線點」後點擊地圖，或從搜尋結果按 ⊕ 加入。")
+                Text(L("切換到地圖上方的「新增路線點」後點擊地圖，或從搜尋結果按 ⊕ 加入。"))
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -334,22 +348,22 @@ private struct RouteSection: View {
             }
         } header: {
             HStack {
-                Text("路線點（\(controller.waypoints.count)）")
+                Text(L("路線點（\(controller.waypoints.count)）"))
                 Spacer()
                 if !controller.waypoints.isEmpty {
-                    Button("全部清除", role: .destructive) { controller.clearWaypoints() }
+                    Button(L("全部清除"), role: .destructive) { controller.clearWaypoints() }
                         .buttonStyle(.link)
                         .disabled(controller.routeState != .idle)
                 }
             }
         } footer: {
             if controller.waypoints.count > 1 {
-                Text("全程 \(controller.formatDistance(controller.routeDistanceMeters))，約需 \(controller.routeDurationText)")
+                Text(L("全程 \(controller.formatDistance(controller.routeDistanceMeters))，約需 \(controller.routeDurationText)"))
             }
         }
 
-        Section("移動速度") {
-            LabeledContent("速度") {
+        Section(L("移動速度")) {
+            LabeledContent(L("速度")) {
                 HStack(spacing: 4) {
                     TextField("", value: $controller.speedKmh, format: .number.precision(.fractionLength(0...1)))
                         .labelsHidden()
@@ -360,7 +374,7 @@ private struct RouteSection: View {
             }
             // 滑桿獨佔一列並撐滿寬度，Form 才不會把它壓到右側
             Slider(value: $controller.speedKmh, in: 1...120, step: 1) {
-                Text("速度")
+                Text(L("速度"))
             } minimumValueLabel: {
                 Text("1").font(.caption).foregroundStyle(.secondary)
             } maximumValueLabel: {
@@ -375,26 +389,26 @@ private struct RouteSection: View {
                         .tint(controller.speedKmh == preset.kmh ? .accentColor : nil)
                 }
             }
-            Picker("抵達終點後", selection: $controller.routeEndBehavior) {
-                ForEach(RouteEndBehavior.allCases) { Text($0.rawValue).tag($0) }
+            Picker(L("抵達終點後"), selection: $controller.routeEndBehavior) {
+                ForEach(RouteEndBehavior.allCases) { Text($0.title).tag($0) }
             }
             .disabled(controller.routeState != .idle)
-            Toggle("地圖跟隨 iPhone 位置", isOn: $controller.followDevice)
+            Toggle(L("地圖跟隨 iPhone 位置"), isOn: $controller.followDevice)
         }
 
-        Section("執行") {
+        Section(L("執行")) {
             HStack {
                 if controller.routeState == .running {
                     Button {
                         controller.pauseRoute()
                     } label: {
-                        Label("暫停", systemImage: "pause.fill")
+                        Label(L("暫停"), systemImage: "pause.fill")
                     }
                 } else {
                     Button {
                         controller.startRoute()
                     } label: {
-                        Label(controller.routeState == .paused ? "繼續" : "開始移動", systemImage: "play.fill")
+                        Label(controller.routeState == .paused ? L("繼續") : L("開始移動"), systemImage: "play.fill")
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(!controller.isConnected || controller.waypoints.count < 2)
@@ -402,17 +416,17 @@ private struct RouteSection: View {
                 Button(role: .destructive) {
                     controller.stopRoute()
                 } label: {
-                    Label("停止", systemImage: "stop.fill")
+                    Label(L("停止"), systemImage: "stop.fill")
                 }
                 .disabled(controller.routeState == .idle)
             }
 
             if let leg = controller.routeLeg {
-                LabeledContent("進度", value: "第 \(leg.index)/\(leg.count) 段")
-                LabeledContent("已移動", value: controller.formatDistance(controller.routeTraveledMeters))
+                LabeledContent(L("進度"), value: L("第 \(leg.index)/\(leg.count) 段"))
+                LabeledContent(L("已移動"), value: controller.formatDistance(controller.routeTraveledMeters))
             }
             if !controller.isConnected {
-                Text("請先連線 iPhone").font(.callout).foregroundStyle(.secondary)
+                Text(L("請先連線 iPhone")).font(.callout).foregroundStyle(.secondary)
             }
         }
     }

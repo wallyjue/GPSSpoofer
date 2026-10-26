@@ -16,6 +16,8 @@ enum RouteEndBehavior: String, CaseIterable, Identifiable {
     case pingPong = "來回往返"
 
     var id: Self { self }
+
+    var title: String { L(String.LocalizationValue(rawValue)) }
 }
 
 enum RouteState: Equatable {
@@ -27,12 +29,12 @@ struct SpeedPreset: Identifiable {
     let kmh: Double
     var id: String { name }
 
-    static let all = [
-        SpeedPreset(name: "步行", kmh: 5),
-        SpeedPreset(name: "慢跑", kmh: 10),
-        SpeedPreset(name: "單車", kmh: 20),
-        SpeedPreset(name: "汽車", kmh: 60),
-    ]
+    static var all: [SpeedPreset] { [
+        SpeedPreset(name: L("步行"), kmh: 5),
+        SpeedPreset(name: L("慢跑"), kmh: 10),
+        SpeedPreset(name: L("單車"), kmh: 20),
+        SpeedPreset(name: L("汽車"), kmh: 60),
+    ] }
 }
 
 /// 每隔多久更新一次 iPhone 位置
@@ -86,7 +88,7 @@ extension LocationController {
         guard routeTask == nil else { return }
         routeState = .running
         routeTraveledMeters = 0
-        appendLog("開始沿路線移動（\(waypoints.count) 個點，\(formatSpeed(speedKmh))）")
+        appendLog(L("開始沿路線移動（\(waypoints.count) 個點，\(formatSpeed(speedKmh))）"))
         routeTask = Task { await runRoute() }
     }
 
@@ -114,12 +116,12 @@ extension LocationController {
                     points.reverse()
                 }
             } while routeEndBehavior != .stop
-            appendLog("✅ 已抵達終點")
+            appendLog(L("✅ 已抵達終點"))
         } catch is CancellationError {
-            appendLog("路線已停止")
+            appendLog(L("路線已停止"))
             return  // stopRoute() 已重設狀態
         } catch {
-            appendLog("❌ 路線中斷：\(error.localizedDescription)")
+            appendLog(L("❌ 路線中斷：\(error.localizedDescription)"))
         }
         guard !Task.isCancelled else { return }
         routeTask = nil
@@ -174,8 +176,8 @@ extension LocationController {
         guard speedKmh > 0 else { return "—" }
         let seconds = Int(routeDistanceMeters / (speedKmh / 3.6))
         return seconds >= 3600
-            ? String(format: "%d 小時 %d 分", seconds / 3600, seconds % 3600 / 60)
-            : String(format: "%d 分 %d 秒", seconds / 60, seconds % 60)
+            ? L("\(seconds / 3600) 小時 \(seconds % 3600 / 60) 分")
+            : L("\(seconds / 60) 分 \(seconds % 60) 秒")
     }
 }
 

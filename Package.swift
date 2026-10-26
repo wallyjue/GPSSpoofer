@@ -5,11 +5,13 @@ import PackageDescription
 
 let package = Package(
     name: "GPSSpoofer",
+    defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
             name: "GPSSpoofer",
-            path: "Sources/GPSSpoofer"
+            path: "Sources/GPSSpoofer",
+            resources: [.process("Resources")]
         )
     ]
 )

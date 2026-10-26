@@ -37,7 +37,7 @@ extension LocationController {
             }
         } catch {
             searchResults = []
-            appendLog("❌ 搜尋「\(query)」失敗：\(error.localizedDescription)")
+            appendLog(L("❌ 搜尋「\(query)」失敗：\(error.localizedDescription)"))
         }
     }
 

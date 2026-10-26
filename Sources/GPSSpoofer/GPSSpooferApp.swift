@@ -8,10 +8,14 @@ import SwiftUI
 struct GPSSpooferApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var controller = LocationController()
+    @AppStorage(AppLanguage.storageKey) private var language = AppLanguage.system
 
     var body: some Scene {
-        WindowGroup("iPhone 定位模擬") {
+        WindowGroup(L("iPhone 定位模擬")) {
             ContentView()
+                // 字串在 body 計算時就用 L() 翻好，換語言時重建整個畫面
+                .id(language)
+                .environment(\.locale, language.locale)
                 .environmentObject(controller)
                 .frame(minWidth: 900, minHeight: 600)
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
